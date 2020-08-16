@@ -3,25 +3,18 @@ const http = require("http");
 const functions = require("firebase-functions");
 const { google } = require("googleapis");
 const { WebhookClient, Payload } = require("dialogflow-fulfillment");
-const { start } = require("repl");
 const httpAgent = new http.Agent({ keepAlive: true });
+import SERVICES_OFFERED_GOOGLE_PAYLOAD from "./google/services_offered";
+import STYLISTS_GOOGLE_PAYLOAD from "./google/stylists";
+import SELECTION_MAP_GOOGLE from "./google/selection_map";
 
-// Enter your calendar ID below and service account JSON below, see https://github.com/dialogflow/bike-shop/blob/master/README.md#calendar-setup
-const calendarId = "ep74adhrt08amoq3p14u9i9uf0@group.calendar.google.com"; // looks like "6ujc6j6rgfk02cp02vg6h38cs0@group.calendar.google.com"
-const serviceAccount = {
-  type: "service_account",
-  project_id: "bikeshopsample-76fdb",
-  private_key_id: "b236f5516188f316b362989e7dc3b721e1e0fa3c",
-  private_key:
-    "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDVGs7ElfZWwShW\no8yiV700u7DUQzoEpsgAzywov5/sbNjHX0tlB8RAVX47hDphE9NzNz384hdIAkgg\nszw771REHY5+GVuHOws6SVDcGc3pt5dzoTyFmsXEi4AJhRBm2pgOcP1DwcPgIQqV\nGtzlyKixdq+CykwuPv1eHuHW12Z2jhajdbUrfj8T77rnrGnR1CwxUuzu4EIL5wbE\nKWsYXc3jaxz8HPBNU1YDVUF5TrdNRjGWZfHTAHI79rn2vLQwMC2/ypnXNMI+KrdL\ncFV7vzTtkTbKFH1mOWsxVCodHiSmnFEzuY61O89oWEtUF0dKqDbGa8hIOzacAd8s\nI4lNt2LZAgMBAAECggEACAvXk8efwf3QEpljsBuE+tk9X35cUfGkKpen8K/vj2M6\nuihodduZtt4jgobHF4RCnx6OWh6FR4RCie2KkC7ErT+6chtt/8ikb2J2SaE1y6XR\nc526ZccGwZmMz481I9UMGbt9bJID3dIRjrixb4GokO7MyLDvuG1LbsLWvyBp737z\nSzy20qj+/9OnZVrLpwsGIp6VkPbr6Kl8TVCS0MEpZHTxCoCsGJW8kMnVhEvVnlXC\n17nLLQc2yZOxSsZihSQ6hply/hI4zizh9m+uSRsYNBbswzjo/M+l/tG905tni8s/\nIXtLTOu+ckD8tS1IulJJowYRao/HlAdSOWufh0N54wKBgQDsFsYj41oEi1C8SjiK\nE/q+M13qTE13BbTNuZFdSgGUrcxJ4LPPls29xWKD+TLP6maYi3DFyoL35mIedR3U\n8Rm7hJLHwjlDBgGWgK63CYDE3l/E9+nVIYHgAyWyxdC7W0nufUQGFYWmbKQ87wp2\nzdTCklh5QYBH7hWxc2id+HAfHwKBgQDnE8wqqs4Ir8NWCKoINZSdDKAAqhM+7+mZ\n2Cwi+wDotYIdtD5j++fp0FkGoTrlw+ALhHOn/bDCTx3auIl6X/Xxp3yOoIV3oETW\n/tTJdDjRs7m14RkZlKx+dXAKrU0wRRWPy6zaYgwyZdr1mahrw1RCkH3Sc+gt9kzH\nlhajPI1XBwKBgFzIZn5cL1hx1/znvmiliXmOfm5CJn+MQo5HS5W6K/zegNbX9FK1\nFY5rMFhla07C9CcnRd61w9rhM9Z8eIjjaBWF+JmA/zgT+DPJxuAwX+b+7exe8grM\n7Fm5YutrSqkXK2sK19z8QFYzhCheWWJvaho9oX+l+mBKdUQT8x2CMa5JAoGAUyww\nD6d9E2lYMM5bjSrj/AdATBzrYnruJR7G/CxGbnxuggyPbGOOXP1OHfHIhk0ThnG9\nQ1kv1zCs+T301eRWXQ3A6oFiqOU6AfylUIGRtgEvtgR4iVmXIMlac61fHCGxmhlg\ndRZXd4hr4HzXPzqGSJNDho2Lo4eEqU4fhc/Uu98CgYBLztwEnrtGfmbiSb7rluo7\nekQqtsqa0ztaUHhqK+CCoD9lQDqS0ZPbaxbPLqzxKmRnPXCKeB8+j4Mn6lsw31V4\nZH80M0FFX95kbrnoBoLIAVzK8Qb2RSqiRCoXtNdgA4ML9Dt3zsHDlgAPLz665eVY\nwslNNJVF9T5wJ3PR0xm9yA==\n-----END PRIVATE KEY-----\n",
-  client_email: "salon-calendar@bikeshopsample-76fdb.iam.gserviceaccount.com",
-  client_id: "115306897959035493438",
-  auth_uri: "https://accounts.google.com/o/oauth2/auth",
-  token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url:
-    "https://www.googleapis.com/robot/v1/metadata/x509/salon-calendar%40bikeshopsample-76fdb.iam.gserviceaccount.com",
-};
+import SERVICES_OFFERED_FACEBOOK_PAYLOAD from "./facebook/services_offered";
+import STYLISTS_FACEBOOK_PAYLOAD from "./facebook/stylists";
+import SELECTION_MAP_FACEBOOK from "./facebook/selection_map";
+
+import { dateOptions, timeOptions } from "./date_time_options";
+
+import { calendarId, serviceAccount } from "./auth_settings";
 
 // Set up Google Calendar Service account credentials
 const serviceAccountAuth = new google.auth.JWT({
@@ -42,34 +35,6 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       response,
     });
 
-    const selectionMapGoogle = {
-      SELECTION_KEY_CUT: "Simple Cut",
-      SELECTION_KEY_STYLE: "Hair Style",
-      SELECTION_KEY_PREMIUM: "The Works Premium",
-    };
-
-    const selectionMapFacebook = {
-      "Simple Cut": "Simple Cut",
-      "Hair Style": "Hair Style",
-      "The Works Premium": "The Works Premium",
-    };
-
-    const dateOptions = {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    };
-    const dateOptionsShort = {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    };
-    const timeOptions = {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "America/New_York",
-    };
-
     // console.log("Dialogflow Request Headers: " + JSON.stringify(request.headers));
     // console.log("Dialogflow Request BODY: " + JSON.stringify(request.body));
 
@@ -85,245 +50,16 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       });
 
       agent.add(
-        new Payload(agent.ACTIONS_ON_GOOGLE, {
-          expectUserResponse: true,
-          systemIntent: {
-            intent: "actions.intent.OPTION",
-            data: {
-              "@type": "type.googleapis.com/google.actions.v2.OptionValueSpec",
-              listSelect: {
-                title: "Packages",
-                items: [
-                  {
-                    optionInfo: {
-                      key: "SELECTION_KEY_CUT",
-                      synonyms: ["synonym 1", "synonym 2", "synonym 3"],
-                    },
-                    description: "Cut and Shampoo. Lorum ipsum dorem kicksum",
-                    image: {
-                      url:
-                        "http://attentiontrust.org/wp-content/uploads/2018/01/Cool-Men%E2%80%99s-Haircut-best-men-hairstyle.jpg",
-                      accessibilityText: "simple hair cut",
-                    },
-                    title: "Simple Cut ($30)",
-                  },
-                  {
-                    optionInfo: {
-                      key: "SELECTION_KEY_STYLE",
-                      synonyms: [
-                        "Google Home Assistant",
-                        "Assistant on the Google Home",
-                      ],
-                    },
-                    description:
-                      "Cut, Shampoo, Style, Color, Blow dry. Lorum ipsum dorem kicksum",
-                    image: {
-                      url:
-                        "https://wallup.net/wp-content/uploads/2016/01/28579-profile-white_background-women-curly_hair-brunette-bare_shoulders-face-brown_eyes-748x468.jpg",
-                      accessibilityText: "hair style",
-                    },
-                    title: "Beauty Style ($50)",
-                  },
-                  {
-                    optionInfo: {
-                      key: "SELECTION_KEY_PREMIUM",
-                      synonyms: ["Google Pixel XL", "Pixel", "Pixel XL"],
-                    },
-                    description:
-                      "Hair Style package + Massage + Facial. Lorum ipsum dorem kicksum",
-                    image: {
-                      url:
-                        "http://www.sofiaestetic.bg/wp-content/uploads/2017/01/botox.jpg",
-                      accessibilityText: "massage",
-                    },
-                    title: "'The Works' Premium ($100)",
-                  },
-                ],
-              },
-            },
-          },
-          richResponse: {
-            items: [
-              {
-                simpleResponse: {
-                  textToSpeech:
-                    "Sure thing. Please select the package you'd prefer.",
-                },
-              },
-            ],
-          },
-        })
+        new Payload(agent.ACTIONS_ON_GOOGLE, SERVICES_OFFERED_GOOGLE_PAYLOAD)
       );
 
-      const facebookPayload = {
-        attachment: {
-          type: "template",
-          payload: {
-            template_type: "generic",
-            elements: [
-              {
-                title: "Simple Cut ($30)",
-                image_url:
-                  "http://attentiontrust.org/wp-content/uploads/2018/01/Cool-Men%E2%80%99s-Haircut-best-men-hairstyle.jpg",
-                subtitle: "Cut and Shampoo. Lorum ipsum dorem kicksum",
-                buttons: [
-                  {
-                    title: "Select Simple Cut",
-                    type: "postback",
-                    payload: "Select Simple Cut",
-                  },
-                ],
-              },
-              {
-                title: "Hair Style ($50)",
-                image_url:
-                  "https://wallup.net/wp-content/uploads/2016/01/28579-profile-white_background-women-curly_hair-brunette-bare_shoulders-face-brown_eyes-748x468.jpg",
-                subtitle:
-                  "Cut, Shampoo, Style, Color, Blow dry. Lorum ipsum dorem kicksum.",
-                buttons: [
-                  {
-                    title: "Select Hair Style",
-                    type: "postback",
-                    payload: "Select Hair Style",
-                  },
-                ],
-              },
-              {
-                title: "'The Works' Premium ($50)",
-                image_url:
-                  "http://www.sofiaestetic.bg/wp-content/uploads/2017/01/botox.jpg",
-                subtitle:
-                  "Cut, Shampoo, Style, Color, Blow dry. Lorum ipsum dorem kicksum.",
-                buttons: [
-                  {
-                    title: "Select 'The Works' Premium",
-                    type: "postback",
-                    payload: "Select 'The Works' Premium",
-                  },
-                ],
-              },
-            ],
-          },
-        },
-      };
-
-      agent.add(new Payload(agent.FACEBOOK, facebookPayload));
+      agent.add(new Payload(agent.FACEBOOK, SERVICES_OFFERED_FACEBOOK_PAYLOAD));
     }
 
     function selectStylist(agent) {
-      agent.add(
-        new Payload(agent.ACTIONS_ON_GOOGLE, {
-          expectUserResponse: true,
-          systemIntent: {
-            intent: "actions.intent.OPTION",
-            data: {
-              "@type": "type.googleapis.com/google.actions.v2.OptionValueSpec",
-              listSelect: {
-                title: "Stylists",
-                items: [
-                  {
-                    optionInfo: {
-                      key: "SELECTION_KEY_DOGAN",
-                      synonyms: ["synonym 1", "synonym 2", "synonym 3"],
-                    },
-                    image: {
-                      url:
-                        "http://attentiontrust.org/wp-content/uploads/2018/01/Cool-Men%E2%80%99s-Haircut-best-men-hairstyle.jpg",
-                      accessibilityText: "dogan",
-                    },
-                    title: "Dogan",
-                  },
-                  {
-                    optionInfo: {
-                      key: "SELECTION_KEY_JOHN",
-                      synonyms: [
-                        "Google Home Assistant",
-                        "Assistant on the Google Home",
-                      ],
-                    },
-                    image: {
-                      url:
-                        "https://wallup.net/wp-content/uploads/2016/01/28579-profile-white_background-women-curly_hair-brunette-bare_shoulders-face-brown_eyes-748x468.jpg",
-                      accessibilityText: "john",
-                    },
-                    title: "John",
-                  },
-                  {
-                    optionInfo: {
-                      key: "SELECTION_KEY_TUNGUY",
-                      synonyms: ["Google Pixel XL", "Pixel", "Pixel XL"],
-                    },
-                    image: {
-                      url:
-                        "http://www.sofiaestetic.bg/wp-content/uploads/2017/01/botox.jpg",
-                      accessibilityText: "tunguy",
-                    },
-                    title: "Tunguy",
-                  },
-                ],
-              },
-            },
-          },
-          richResponse: {
-            items: [
-              {
-                simpleResponse: {
-                  textToSpeech: "Please select a stylist",
-                },
-              },
-            ],
-          },
-        })
-      );
+      agent.add(new Payload(agent.ACTIONS_ON_GOOGLE, STYLISTS_GOOGLE_PAYLOAD));
 
-      const facebookPayload = {
-        attachment: {
-          type: "template",
-          payload: {
-            template_type: "generic",
-            elements: [
-              {
-                title: "Dogan",
-                image_url:
-                  "http://attentiontrust.org/wp-content/uploads/2018/01/Cool-Men%E2%80%99s-Haircut-best-men-hairstyle.jpg",
-                buttons: [
-                  {
-                    title: "Select Dogan",
-                    type: "postback",
-                    payload: "Select Dogan",
-                  },
-                ],
-              },
-              {
-                title: "John",
-                image_url:
-                  "https://wallup.net/wp-content/uploads/2016/01/28579-profile-white_background-women-curly_hair-brunette-bare_shoulders-face-brown_eyes-748x468.jpg",
-                buttons: [
-                  {
-                    title: "Select John",
-                    type: "postback",
-                    payload: "Select John",
-                  },
-                ],
-              },
-              {
-                title: "Tunguy",
-                image_url:
-                  "http://www.sofiaestetic.bg/wp-content/uploads/2017/01/botox.jpg",
-                buttons: [
-                  {
-                    title: "Select Tunguy",
-                    type: "postback",
-                    payload: "Select Tunguy",
-                  },
-                ],
-              },
-            ],
-          },
-        },
-      };
-
-      agent.add(new Payload(agent.FACEBOOK, facebookPayload));
+      agent.add(new Payload(agent.FACEBOOK, STYLISTS_FACEBOOK_PAYLOAD));
     }
 
     function makeAppointmentGoogleFollowup(agent) {
@@ -331,7 +67,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       console.log("FUNCTION makeAppointmentGoogleFollowup");
 
       const appointmentType =
-        selectionMapGoogle[actionsContext.parameters.OPTION];
+        SELECTION_MAP_GOOGLE[actionsContext.parameters.OPTION];
 
       agent.context.set({
         name: "appointment",
@@ -355,7 +91,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       console.log("FUNCTION makeAppointmentFacebookFollowup");
       let genericContext = getOutputContext("generic");
       const appointmentType =
-        selectionMapFacebook[genericContext.parameters.appointmentType];
+        SELECTION_MAP_FACEBOOK[genericContext.parameters.appointmentType];
 
       agent.context.set({
         name: "appointment",
