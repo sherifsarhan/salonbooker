@@ -388,6 +388,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
           };
         }
       }
+      return null;
     }
 
     function pickDateInput(agent) {
@@ -436,6 +437,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
             );
             console.log("done");
             console.log(success);
+            return success;
           },
           (rejectReason) => {
             //handle rejection
@@ -473,7 +475,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
                 availableTimeSlots.push(availableTimeSlot);
               }
             }
-            dateOnlyShowAvailableTimes(
+            return dateOnlyShowAvailableTimes(
               requestedDate,
               availableTimeSlots,
               agent
@@ -563,6 +565,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
         console.log(agent.parameters);
         // agent.add("Okay!");
       }
+      return null;
     }
 
     function dateOnlyShowAvailableTimes(
@@ -932,6 +935,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
           parameters: null,
         });
         console.log("SUCCESSFULLY BOOKED APPOINTMENT");
+        return success;
       });
     }
 
@@ -981,6 +985,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
           parameters: null,
         });
         console.log("SUCCESSFULLY BOOKED APPOINTMENT");
+        return success;
       });
     }
 
