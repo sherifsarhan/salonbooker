@@ -1,29 +1,23 @@
 "use strict";
 const http = require("http");
 const functions = require("firebase-functions");
-const { google } = require("googleapis");
 const { WebhookClient, Payload } = require("dialogflow-fulfillment");
 const httpAgent = new http.Agent({ keepAlive: true });
-import SERVICES_OFFERED_GOOGLE_PAYLOAD from "./google/services_offered";
-import STYLISTS_GOOGLE_PAYLOAD from "./google/stylists";
-import SELECTION_MAP_GOOGLE from "./google/selection_map";
 
-import SERVICES_OFFERED_FACEBOOK_PAYLOAD from "./facebook/services_offered";
-import STYLISTS_FACEBOOK_PAYLOAD from "./facebook/stylists";
-import SELECTION_MAP_FACEBOOK from "./facebook/selection_map";
+import { SERVICES_OFFERED_GOOGLE_PAYLOAD } from "./google/services_offered";
+import { STYLISTS_GOOGLE_PAYLOAD } from "./google/stylists";
+import { SELECTION_MAP_GOOGLE } from "./google/selection_map";
+
+import { SERVICES_OFFERED_FACEBOOK_PAYLOAD } from "./facebook/services_offered";
+import { STYLISTS_FACEBOOK_PAYLOAD } from "./facebook/stylists";
+import { SELECTION_MAP_FACEBOOK } from "./facebook/selection_map";
 
 import { dateOptions, timeOptions } from "./date_time_options";
-
-import { calendarId, serviceAccount } from "./auth_settings";
-
-// Set up Google Calendar Service account credentials
-const serviceAccountAuth = new google.auth.JWT({
-  email: serviceAccount.client_email,
-  key: serviceAccount.private_key,
-  scopes: "https://www.googleapis.com/auth/calendar",
-});
-
-const calendar = google.calendar("v3");
+import {
+  getAvailableDays,
+  getCalendarEvents,
+  createCalendarEvent,
+} from "./calendar_utils";
 
 process.env.DEBUG = "dialogflow:*"; // It enables lib debugging statements
 
@@ -63,7 +57,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
     }
 
     function makeAppointmentGoogleFollowup(agent) {
-      let actionsContext = getOutputContext("actions_intent_option");
+      const actionsContext = getOutputContext("actions_intent_option");
       console.log("FUNCTION makeAppointmentGoogleFollowup");
 
       const appointmentType =
@@ -89,7 +83,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
 
     function makeAppointmentFacebookFollowup(agent) {
       console.log("FUNCTION makeAppointmentFacebookFollowup");
-      let genericContext = getOutputContext("generic");
+      const genericContext = getOutputContext("generic");
       const appointmentType =
         SELECTION_MAP_FACEBOOK[genericContext.parameters.appointmentType];
 
@@ -112,8 +106,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
 
     function getOutputContext(contextName) {
       const requestContexts = request.body.queryResult.outputContexts;
-      for (let index = 0; index < requestContexts.length; index++) {
-        const context = requestContexts[index];
+      for (const currContext of requestContexts) {
+        const context = currContext;
         const name = context.name.split("/").slice(-1)[0];
 
         if (name === contextName) {
@@ -190,22 +184,22 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
 
       // if ONLY date, show up to 5 available appointments
       if (agent.parameters.date) {
-        let requestedDate = new Date(
+        const requestedDate = new Date(
           new Date(agent.parameters.date).setHours(0)
         );
-        let maxSearchDate = new Date(new Date(requestedDate).setHours(24));
+        const maxSearchDate = new Date(new Date(requestedDate).setHours(24));
         return getCalendarEvents(requestedDate, maxSearchDate).then(
-          (events) => {
-            let unavailableTimes = {};
+          (events: any) => {
+            const unavailableTimes = {};
             events.forEach((event) => {
-              let currEvent = new Date(event.start.dateTime);
+              const currEvent = new Date(event.start.dateTime);
               unavailableTimes[currEvent.getHours()] = true;
             });
             console.log(unavailableTimes);
-            let availableTimeSlots = [];
+            const availableTimeSlots = [];
             for (let i = 13; i < 22; i++) {
               if (!unavailableTimes[i]) {
-                let availableTimeSlot = new Date(
+                const availableTimeSlot = new Date(
                   new Date(requestedDate).setHours(i)
                 );
                 availableTimeSlots.push(availableTimeSlot);
@@ -221,9 +215,9 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
             console.log(rejectReason.message);
             if (rejectReason.message === "No Events Available") {
               // all events 9-5 are available.
-              let availableTimeSlots = [];
+              const availableTimeSlots = [];
               for (let i = 13; i < 22; i++) {
-                let availableTimeSlot = new Date(
+                const availableTimeSlot = new Date(
                   new Date(requestedDate).setHours(i)
                 );
                 availableTimeSlots.push(availableTimeSlot);
@@ -245,9 +239,9 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
         const timePeriod = agent.parameters["time-period"];
         console.log("IN TIME PERIOD");
         console.log(timePeriod);
-        let startTime = new Date(timePeriod.startTime);
-        let endTime = new Date(timePeriod.endTime);
-        let maxSearchDate = new Date(
+        const startTime = new Date(timePeriod.startTime);
+        const endTime = new Date(timePeriod.endTime);
+        const maxSearchDate = new Date(
           new Date(startTime).setMonth(startTime.getMonth() + 1)
         );
 
@@ -309,11 +303,11 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       availableTimeSlots,
       agent
     ) {
-      let googleItems = [];
-      let facebookItems = [];
+      const googleItems = [];
+      const facebookItems = [];
       availableTimeSlots.forEach((day, index) => {
-        let timeString = day.toLocaleTimeString("en-us", timeOptions);
-        let dayString = day.toLocaleDateString("en-us", dateOptions);
+        const timeString = day.toLocaleTimeString("en-us", timeOptions);
+        const dayString = day.toLocaleDateString("en-us", dateOptions);
         if (index < 30) {
           googleItems.push({
             optionInfo: {
@@ -383,8 +377,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       // add available date in new array. cancel if eventStart at 4pm (time)
 
       const reducer = (accumulator, currentValue) => {
-        let eventDateKey = new Date(currentValue.start.dateTime).getDate();
-        let eventStartTime = new Date(currentValue.start.dateTime);
+        const eventDateKey = new Date(currentValue.start.dateTime).getDate();
+        const eventStartTime = new Date(currentValue.start.dateTime);
 
         if (
           Math.abs(
@@ -395,23 +389,23 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
         ) {
           return accumulator;
         }
-        let dayEvents = accumulator[eventDateKey];
+        const dayEvents = accumulator[eventDateKey];
         if (dayEvents) {
           dayEvents.push(currentValue);
         } else {
-          let newDayEvents = [currentValue];
+          const newDayEvents = [currentValue];
           accumulator[eventDateKey] = newDayEvents;
         }
         return accumulator;
       };
 
-      let unavailableDays = events.reduce(reducer, {});
+      const unavailableDays = events.reduce(reducer, {});
       console.log("UNAVAILABLE DAYS: ");
       console.log(JSON.stringify(unavailableDays));
 
-      let availableDays = [];
+      const availableDays = [];
       for (let i = 0; i < 28; i++) {
-        let availableDate = new Date(
+        const availableDate = new Date(
           new Date(dateTimeStart).setDate(dateTimeStart.getDate() + i)
         );
         if (!unavailableDays[availableDate.getDate()]) {
@@ -421,11 +415,11 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
         }
       }
 
-      let googleItems = [];
-      let facebookItems = [];
+      const googleItems = [];
+      const facebookItems = [];
       availableDays.forEach((day, index) => {
-        let dayString = day.toLocaleDateString("en-us", dateOptions);
-        let timeString = day.toLocaleTimeString("en-us", timeOptions);
+        const dayString = day.toLocaleDateString("en-us", dateOptions);
+        const timeString = day.toLocaleTimeString("en-us", timeOptions);
 
         googleItems.push({
           optionInfo: {
@@ -498,8 +492,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       // add available date in new array. cancel if eventStart between time period (time)
 
       const reducer = (accumulator, currentValue) => {
-        let eventDateKey = new Date(currentValue.start.dateTime).getDate();
-        let eventStartTime = new Date(currentValue.start.dateTime);
+        const eventDateKey = new Date(currentValue.start.dateTime).getDate();
+        const eventStartTime = new Date(currentValue.start.dateTime);
 
         //              2:00 - 8:00                 2:00 - 8:00
         //              -----------                 -----------
@@ -513,13 +507,13 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
         //              90      150                 90      150
         //              450     510                 450     510
 
-        let eventStartTimeInMinutes =
+        const eventStartTimeInMinutes =
           eventStartTime.getHours() * 60 + eventStartTime.getMinutes();
-        let eventDurationInMinutes = 60;
+        const eventDurationInMinutes = 60;
 
-        let requestedStartTimeInMinutes =
+        const requestedStartTimeInMinutes =
           startTime.getHours() * 60 + startTime.getMinutes();
-        let requestedEndTimeInMinutes =
+        const requestedEndTimeInMinutes =
           endTime.getHours() * 60 + endTime.getMinutes();
         console.log(currentValue);
         console.log("eventStartTimeInMinutes: " + eventStartTimeInMinutes);
@@ -535,27 +529,27 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
         ) {
           return accumulator;
         }
-        let dayEvents = accumulator[eventDateKey];
+        const dayEvents = accumulator[eventDateKey];
         if (dayEvents) {
           dayEvents.push(currentValue);
         } else {
-          let newDayEvents = [currentValue];
+          const newDayEvents = [currentValue];
           accumulator[eventDateKey] = newDayEvents;
         }
         return accumulator;
       };
 
-      let unavailableDays = events.reduce(reducer, {});
+      const unavailableDays = events.reduce(reducer, {});
       console.log("UNAVAILABLE DAYS: ");
       console.log(JSON.stringify(unavailableDays));
 
-      let availableDateTimeSlots = [];
-      let startDate = new Date();
+      const availableDateTimeSlots = [];
+      const startDate = new Date();
       for (let i = 0; i < 28; i++) {
         if (availableDateTimeSlots.length === 10) {
           break;
         }
-        let availableDate = new Date(
+        const availableDate = new Date(
           new Date(startDate).setDate(startDate.getDate() + i)
         );
         if (!unavailableDays[availableDate.getDate()]) {
@@ -563,21 +557,21 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
           // push all timeslots starting from requested time range
           // console.log(availableDate);
           for (let i = startTime.getHours(); i < endTime.getHours(); i++) {
-            let availableDateTimeSlot = new Date(availableDate);
+            const availableDateTimeSlot = new Date(availableDate);
             availableDateTimeSlot.setHours(i);
             availableDateTimeSlot.setMinutes(0);
             availableDateTimeSlots.push(availableDateTimeSlot);
           }
         } else {
-          let fuckyDate = unavailableDays[availableDate.getDate()];
+          const fuckyDate = unavailableDays[availableDate.getDate()];
         }
       }
 
-      let googleItems = [];
-      let facebookItems = [];
+      const googleItems = [];
+      const facebookItems = [];
       availableDateTimeSlots.forEach((day, index) => {
-        let dayString = day.toLocaleDateString("en-us", dateOptions);
-        let timeString = day.toLocaleTimeString("en-us", timeOptions);
+        const dayString = day.toLocaleDateString("en-us", dateOptions);
+        const timeString = day.toLocaleTimeString("en-us", timeOptions);
         if (index < 30) {
           googleItems.push({
             optionInfo: {
@@ -641,14 +635,14 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
 
     function pickDateInputConfirmGoogle(agent) {
       console.log("FUNCTION pickDateInputConfirmGoogle");
-      let actionsContext = getOutputContext("actions_intent_option");
+      const actionsContext = getOutputContext("actions_intent_option");
       console.log(actionsContext);
-      let selectedDate = new Date(actionsContext.parameters.OPTION);
+      const selectedDate = new Date(actionsContext.parameters.OPTION);
       const appointmentContext = agent.context.get("appointment");
       const appointmentType = appointmentContext.parameters.appointmentType;
 
       const dateTimeStart = selectedDate;
-      let dateTimeEnd = new Date(selectedDate);
+      const dateTimeEnd = new Date(selectedDate);
       dateTimeEnd.setHours(dateTimeStart.getHours() + 1);
 
       return createCalendarEvent(
@@ -682,8 +676,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       console.log(agent.parameters.date);
       console.log(agent.parameters.time);
       console.log(appointmentContext.parameters.requestedTime);
-      let selectedDate = new Date(agent.parameters.date);
-      let selectedHours =
+      const selectedDate = new Date(agent.parameters.date);
+      const selectedHours =
         new Date(agent.parameters.time).getHours() ||
         appointmentContext.parameters.requestedHours;
       let selectedMinutes = new Date(agent.parameters.time).getMinutes();
@@ -698,7 +692,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       const appointmentType = appointmentContext.parameters.appointmentType;
 
       const dateTimeStart = selectedDate;
-      let dateTimeEnd = new Date(selectedDate);
+      const dateTimeEnd = new Date(selectedDate);
       dateTimeEnd.setHours(dateTimeStart.getHours() + 1);
 
       return createCalendarEvent(
@@ -730,7 +724,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
       agent.setFollowupEvent("PICK_DATE");
     }
 
-    let intentMap = new Map();
+    const intentMap = new Map();
     intentMap.set("Make Appointment", makeAppointment);
 
     intentMap.set("Make Appointment - Select Stylist", selectStylist);
@@ -768,120 +762,3 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
     agent.handleRequest(intentMap);
   }
 );
-
-function getAvailableDays(dateTimeStart, dateTimeEnd) {
-  return new Promise((resolve, reject) => {
-    calendar.freebusy.query(
-      {
-        auth: serviceAccountAuth,
-        headers: {
-          "content-type": "application/json",
-        },
-        resource: {
-          timeMin: dateTimeStart.toISOString(),
-          timeMax: dateTimeEnd.toISOString(),
-          items: [
-            {
-              id: calendarId,
-            },
-          ],
-        },
-      },
-      (err, calendarResponse) => {
-        console.log("here");
-        console.log(calendarResponse.data);
-        if (err) {
-          reject(err);
-        } else {
-          resolve(calendarResponse.data);
-        }
-      }
-    );
-  });
-}
-
-function getCalendarEvents(dateTimeStart, dateTimeEnd) {
-  return new Promise((resolve, reject) => {
-    calendar.events.list(
-      {
-        auth: serviceAccountAuth, // List events for time period
-        calendarId: calendarId,
-        timeMin: dateTimeStart.toISOString(),
-        timeMax: dateTimeEnd.toISOString(),
-      },
-      (err, calendarResponse) => {
-        if (calendarResponse.data.items.length > 0) {
-          resolve(calendarResponse.data.items);
-        } else {
-          console.log("no events available");
-          reject(err || new Error("No Events Available"));
-        }
-      }
-    );
-  });
-}
-
-function createCalendarEvent(
-  dateTimeStart,
-  dateTimeEnd,
-  appointmentType,
-  phoneNumber
-) {
-  return new Promise((resolve, reject) => {
-    calendar.events.list(
-      {
-        auth: serviceAccountAuth, // List events for time period
-        calendarId: calendarId,
-        timeMin: dateTimeStart.toISOString(),
-        timeMax: dateTimeEnd.toISOString(),
-      },
-      (err, calendarResponse) => {
-        console.log("IN CALENDAR EVENT LIST CALL BACK");
-        // Check if there is a event already on the Bike Shop Calendar
-        let conflict = false;
-        if (err || calendarResponse.data.items.length > 0) {
-          if (err) {
-            conflict = true;
-            reject(err);
-            return;
-          }
-          if (calendarResponse.data.items.length) {
-            calendarResponse.data.items.forEach((item) => {
-              console.log("APPOINTMENT TYPE: " + appointmentType);
-              if (item.summary === appointmentType) {
-                conflict = true;
-                reject(
-                  new Error("Requested time conflicts with another appointment")
-                );
-                return;
-              }
-            });
-          }
-        }
-        if (!conflict) {
-          console.log("why");
-          // Create event for the requested time period
-          calendar.events.insert(
-            {
-              auth: serviceAccountAuth,
-              calendarId: calendarId,
-              resource: {
-                summary: appointmentType,
-                description: phoneNumber,
-                start: {
-                  dateTime: dateTimeStart,
-                },
-                end: {
-                  dateTime: dateTimeEnd,
-                },
-              },
-            },
-            (err, event) => {
-              return err ? reject(err) : resolve(event);
-            }
-          );
-        }
-      }
-    );
-  });
-}

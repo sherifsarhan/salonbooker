@@ -1,6 +1,3 @@
-// Enter your calendar ID below and service account JSON below, see https://github.com/dialogflow/bike-shop/blob/master/README.md#calendar-setup
-export const calendarId =
-  "ep74adhrt08amoq3p14u9i9uf0@group.calendar.google.com"; // looks like "6ujc6j6rgfk02cp02vg6h38cs0@group.calendar.google.com"
 export const serviceAccount = {
   type: "service_account",
   project_id: "bikeshopsample-76fdb",

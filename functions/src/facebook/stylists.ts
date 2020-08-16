@@ -1,47 +1,42 @@
-export default services_offered = {
+export const STYLISTS_FACEBOOK_PAYLOAD = {
   attachment: {
     type: "template",
     payload: {
       template_type: "generic",
       elements: [
         {
-          title: "Simple Cut ($30)",
+          title: "Dogan",
           image_url:
             "http://attentiontrust.org/wp-content/uploads/2018/01/Cool-Men%E2%80%99s-Haircut-best-men-hairstyle.jpg",
-          subtitle: "Cut and Shampoo. Lorum ipsum dorem kicksum",
           buttons: [
             {
-              title: "Select Simple Cut",
+              title: "Select Dogan",
               type: "postback",
-              payload: "Select Simple Cut",
+              payload: "Select Dogan",
             },
           ],
         },
         {
-          title: "Hair Style ($50)",
+          title: "John",
           image_url:
             "https://wallup.net/wp-content/uploads/2016/01/28579-profile-white_background-women-curly_hair-brunette-bare_shoulders-face-brown_eyes-748x468.jpg",
-          subtitle:
-            "Cut, Shampoo, Style, Color, Blow dry. Lorum ipsum dorem kicksum.",
           buttons: [
             {
-              title: "Select Hair Style",
+              title: "Select John",
               type: "postback",
-              payload: "Select Hair Style",
+              payload: "Select John",
             },
           ],
         },
         {
-          title: "'The Works' Premium ($50)",
+          title: "Tunguy",
           image_url:
             "http://www.sofiaestetic.bg/wp-content/uploads/2017/01/botox.jpg",
-          subtitle:
-            "Cut, Shampoo, Style, Color, Blow dry. Lorum ipsum dorem kicksum.",
           buttons: [
             {
-              title: "Select 'The Works' Premium",
+              title: "Select Tunguy",
               type: "postback",
-              payload: "Select 'The Works' Premium",
+              payload: "Select Tunguy",
             },
           ],
         },

@@ -1,6 +1,4 @@
-import selection_map from "../google/selection_map";
-
-export default selection_map = {
+export const SELECTION_MAP_FACEBOOK = {
   "Simple Cut": "Simple Cut",
   "Hair Style": "Hair Style",
   "The Works Premium": "The Works Premium",

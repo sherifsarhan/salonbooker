@@ -1,55 +1,50 @@
-export default services_offered = {
+export const STYLISTS_GOOGLE_PAYLOAD = {
   expectUserResponse: true,
   systemIntent: {
     intent: "actions.intent.OPTION",
     data: {
       "@type": "type.googleapis.com/google.actions.v2.OptionValueSpec",
       listSelect: {
-        title: "Packages",
+        title: "Stylists",
         items: [
           {
             optionInfo: {
-              key: "SELECTION_KEY_CUT",
+              key: "SELECTION_KEY_DOGAN",
               synonyms: ["synonym 1", "synonym 2", "synonym 3"],
             },
-            description: "Cut and Shampoo. Lorum ipsum dorem kicksum",
             image: {
               url:
                 "http://attentiontrust.org/wp-content/uploads/2018/01/Cool-Men%E2%80%99s-Haircut-best-men-hairstyle.jpg",
-              accessibilityText: "simple hair cut",
+              accessibilityText: "dogan",
             },
-            title: "Simple Cut ($30)",
+            title: "Dogan",
           },
           {
             optionInfo: {
-              key: "SELECTION_KEY_STYLE",
+              key: "SELECTION_KEY_JOHN",
               synonyms: [
                 "Google Home Assistant",
                 "Assistant on the Google Home",
               ],
             },
-            description:
-              "Cut, Shampoo, Style, Color, Blow dry. Lorum ipsum dorem kicksum",
             image: {
               url:
                 "https://wallup.net/wp-content/uploads/2016/01/28579-profile-white_background-women-curly_hair-brunette-bare_shoulders-face-brown_eyes-748x468.jpg",
-              accessibilityText: "hair style",
+              accessibilityText: "john",
             },
-            title: "Beauty Style ($50)",
+            title: "John",
           },
           {
             optionInfo: {
-              key: "SELECTION_KEY_PREMIUM",
+              key: "SELECTION_KEY_TUNGUY",
               synonyms: ["Google Pixel XL", "Pixel", "Pixel XL"],
             },
-            description:
-              "Hair Style package + Massage + Facial. Lorum ipsum dorem kicksum",
             image: {
               url:
                 "http://www.sofiaestetic.bg/wp-content/uploads/2017/01/botox.jpg",
-              accessibilityText: "massage",
+              accessibilityText: "tunguy",
             },
-            title: "'The Works' Premium ($100)",
+            title: "Tunguy",
           },
         ],
       },
@@ -59,7 +54,7 @@ export default services_offered = {
     items: [
       {
         simpleResponse: {
-          textToSpeech: "Sure thing. Please select the package you'd prefer.",
+          textToSpeech: "Please select a stylist",
         },
       },
     ],
